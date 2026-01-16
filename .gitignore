@@ -1,0 +1,21 @@
+# Environment configuration
+.env
+
+# Database and state files
+data/*.db
+data/*.db-*
+data/state/
+
+# Log files
+logs/
+*.log
+
+# Dashboard dependencies and build
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.env
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store

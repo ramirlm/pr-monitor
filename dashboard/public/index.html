@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Monitor Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 PR Monitor Dashboard</h1>
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="total-prs">-</span>
+                    <span class="stat-label">Total PRs</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="open-prs">-</span>
+                    <span class="stat-label">Open PRs</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="running-monitors">-</span>
+                    <span class="stat-label">Running Monitors</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="unaddressed-comments">-</span>
+                    <span class="stat-label">Unaddressed Comments</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Detected PR Banner -->
+        <div id="detected-pr-banner" class="detected-pr-banner" style="display: none;"></div>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="monitors">Running Monitors</button>
+            <button class="tab-button" data-tab="prs">All PRs</button>
+        </div>
+
+        <main>
+            <!-- Running Monitors Tab -->
+            <div id="monitors-tab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Running Monitors</h2>
+                    <button class="btn btn-primary" onclick="refreshMonitors()">🔄 Refresh</button>
+                </div>
+                <div id="monitors-list" class="monitors-list">
+                    <div class="loading">Loading monitors...</div>
+                </div>
+
+                <!-- Real-time Log Viewer -->
+                <div class="log-viewer-container" style="margin-top: 2rem;">
+                    <div class="log-viewer-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">📄 Monitor Logs</h3>
+                        <div class="log-controls" style="display: flex; gap: 1rem; align-items: center;">
+                            <select id="log-pr-select" class="log-select" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">Select a PR to view logs...</option>
+                            </select>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                                <input type="checkbox" id="log-auto-refresh" checked>
+                                Auto-refresh (every 3s)
+                            </label>
+                            <button onclick="refreshLogs()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">🔄 Refresh</button>
+                            <button onclick="clearLogDisplay()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">🗑️ Clear Display</button>
+                        </div>
+                    </div>
+                    <div id="log-display" class="log-display" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; font-family: 'Monaco', 'Menlo', 'Courier New', monospace; font-size: 0.85rem; height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #333;">
+                        <div style="color: #888;">Select a PR from the dropdown above to view its logs...</div>
+                    </div>
+                    <div id="log-metadata" class="log-metadata" style="margin-top: 0.5rem; font-size: 0.85rem; color: #666; display: none;">
+                        <span id="log-status"></span>
+                        <span id="log-lines" style="margin-left: 1rem;"></span>
+                        <span id="log-size" style="margin-left: 1rem;"></span>
+                        <span id="log-updated" style="margin-left: 1rem;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All PRs Tab -->
+            <div id="prs-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Tracked PRs</h2>
+                    <button class="btn btn-primary" onclick="refreshPRs()">🔄 Refresh</button>
+                </div>
+                <div id="prs-list" class="prs-list">
+                    <div class="loading">Loading PRs...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- PR Detail Modal -->
+        <div id="pr-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">PR Details</h2>
+                    <button class="close-button" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
