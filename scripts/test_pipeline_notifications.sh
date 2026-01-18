@@ -73,8 +73,14 @@ should_send_notification() {
         notification_sent="false"
     fi
     
-    # Send if completed and not sent
-    if [[ "${notification_sent}" == "false" ]] && [[ "${current_status}" == "success" || "${current_status}" == "failed" ]]; then
+    # Check if current status is terminal (success or failed)
+    local is_terminal="false"
+    if [[ "${current_status}" == "success" || "${current_status}" == "failed" ]]; then
+        is_terminal="true"
+    fi
+    
+    # Send if terminal and not sent
+    if [[ "${notification_sent}" == "false" ]] && [[ "${is_terminal}" == "true" ]]; then
         echo "true"
     else
         echo "false"

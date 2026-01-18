@@ -39,6 +39,7 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo '')}"
 GITHUB_REPO="${REPO_ARG:-${GITHUB_REPO:-}}"
 PUSHOVER_USER="${PUSHOVER_USER:-}"
 PUSHOVER_TOKEN="${PUSHOVER_TOKEN:-}"
+NOTIFY_PIPELINE_ONLY="${NOTIFY_PIPELINE_ONLY:-true}"  # Default to pipeline-level only
 STATE_FILE="${STATE_FILE:-${REPO_ROOT}/.pr_monitor/data/state/pr_${PR_NUMBER}.json}"
 LOG_FILE="${LOG_FILE:-${REPO_ROOT}/.pr_monitor/logs/pr_${PR_NUMBER}.log}"
 DB_PATH="${DB_PATH:-${REPO_ROOT}/.pr_monitor/data/pr_tracking.db}"
@@ -152,6 +153,12 @@ send_pushover_notification() {
         log "ERROR" "${RED}Failed to send Pushover notification: ${response}${NC}"
         return 1
     fi
+}
+
+# Check if pipeline status is terminal (completed)
+is_pipeline_terminal() {
+    local status="$1"
+    [[ "${status}" == "success" || "${status}" == "failed" ]]
 }
 
 # Database helper functions
@@ -738,9 +745,12 @@ process_workflow_runs() {
                 local analysis
                 analysis=$(call_claude_analysis "failure" "${context}" "${prompt}")
 
-                # Individual workflow failure notifications are disabled in favor of pipeline-level notifications
-                # This prevents notification spam when multiple workflows fail
-                # See PIPELINE_NOTIFICATIONS.md for details
+                # Send individual workflow notification if enabled
+                if [[ "${NOTIFY_PIPELINE_ONLY}" != "true" ]]; then
+                    local notification_msg
+                    notification_msg=$(printf "Workflow '%s' failed!\n\n%d/%d jobs failed:\n%b\nView: %s\n\nAI Analysis:\n%s" "${run_name}" "${failed_job_count}" "${job_count}" "${failed_jobs_summary}" "${html_url}" "${analysis}")
+                    send_pushover_notification "PR #${PR_NUMBER}: Workflow Failed" "${notification_msg}" 1
+                fi
 
                 # Update state to mark this workflow as notified (for per-workflow tracking)
                 state=$(echo "${state}" | jq ".notified_workflows += [${run_id}]")
@@ -843,7 +853,7 @@ ${pr_diff}
     fi
 
     # Send notification if pipeline completed and we haven't sent one yet
-    if [[ "${pipeline_notification_sent}" == "false" ]] && [[ "${current_pipeline_status}" == "success" || "${current_pipeline_status}" == "failed" ]]; then
+    if [[ "${pipeline_notification_sent}" == "false" ]] && is_pipeline_terminal "${current_pipeline_status}"; then
         if [[ "${current_pipeline_status}" == "success" ]]; then
             log "INFO" "${GREEN}Pipeline passed - sending success notification${NC}"
             send_pushover_notification "PR #${PR_NUMBER}: ${pr_title}" "✅ Pipeline passed - all workflows completed successfully!" 0
