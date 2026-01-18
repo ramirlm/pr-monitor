@@ -156,9 +156,17 @@ send_pushover_notification() {
 }
 
 # Check if pipeline status is terminal (completed)
+# Returns: 0 (true) if status is terminal (success/failed), 1 (false) otherwise
 is_pipeline_terminal() {
     local status="$1"
     [[ "${status}" == "success" || "${status}" == "failed" ]]
+}
+
+# Reset pipeline notification flag in state
+# Returns: updated state JSON
+reset_pipeline_notification_flag() {
+    local state="$1"
+    echo "${state}" | jq '.pipeline_notification_sent = false'
 }
 
 # Database helper functions
@@ -848,7 +856,7 @@ ${pr_diff}
     # Send notification only when pipeline transitions to a completed state
     if [[ "${current_pipeline_status}" != "${previous_pipeline_status}" ]]; then
         # Pipeline status changed - reset notification flag
-        state=$(echo "${state}" | jq '.pipeline_notification_sent = false')
+        state=$(reset_pipeline_notification_flag "${state}")
         pipeline_notification_sent="false"
     fi
 
