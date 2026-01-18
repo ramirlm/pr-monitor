@@ -39,6 +39,7 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo '')}"
 GITHUB_REPO="${REPO_ARG:-${GITHUB_REPO:-}}"
 PUSHOVER_USER="${PUSHOVER_USER:-}"
 PUSHOVER_TOKEN="${PUSHOVER_TOKEN:-}"
+NOTIFY_PIPELINE_ONLY="${NOTIFY_PIPELINE_ONLY:-true}"  # Default to pipeline-level only
 STATE_FILE="${STATE_FILE:-${REPO_ROOT}/.pr_monitor/data/state/pr_${PR_NUMBER}.json}"
 LOG_FILE="${LOG_FILE:-${REPO_ROOT}/.pr_monitor/logs/pr_${PR_NUMBER}.log}"
 DB_PATH="${DB_PATH:-${REPO_ROOT}/.pr_monitor/data/pr_tracking.db}"
@@ -152,6 +153,20 @@ send_pushover_notification() {
         log "ERROR" "${RED}Failed to send Pushover notification: ${response}${NC}"
         return 1
     fi
+}
+
+# Check if pipeline status is terminal (completed)
+# Returns: 0 (true) if status is terminal (success/failed), 1 (false) otherwise
+is_pipeline_terminal() {
+    local status="$1"
+    [[ "${status}" == "success" || "${status}" == "failed" ]]
+}
+
+# Reset pipeline notification flag in state
+# Returns: updated state JSON
+reset_pipeline_notification_flag() {
+    local state="$1"
+    echo "${state}" | jq '.pipeline_notification_sent = false'
 }
 
 # Database helper functions
@@ -473,7 +488,9 @@ initialize_state() {
             "last_workflow_status": {},
             "notified_comments": [],
             "notified_workflows": [],
-            "pipeline_passed": false
+            "pipeline_passed": false,
+            "pipeline_status": "unknown",
+            "pipeline_notification_sent": false
         }' > "${STATE_FILE}"
     fi
 }
@@ -614,13 +631,20 @@ process_workflow_runs() {
     local state="$2"
     local pr_details="$3"
 
+    # Get PR title for notifications
+    local pr_title
+    pr_title=$(echo "${pr_details}" | jq -r '.title')
+
     local all_success=true
     local has_failures=false
+    local all_completed=true
+    local workflow_count=0
 
     # Process ALL workflows (not just completed ones) - avoid subshell by using process substitution
     while read -r run; do
         [[ -z "${run}" ]] && continue
 
+        workflow_count=$((workflow_count + 1))
         local run_id run_name conclusion status head_sha html_url run_number run_attempt
         run_id=$(echo "${run}" | jq -r '.id')
         run_name=$(echo "${run}" | jq -r '.name')
@@ -632,6 +656,12 @@ process_workflow_runs() {
         run_attempt=$(echo "${run}" | jq -r '.run_attempt // 1')
 
         log "INFO" "Workflow '${run_name}' (${run_id}): ${status} - ${conclusion}"
+
+        # Check if workflow is still in progress
+        if [[ "${status}" != "completed" ]]; then
+            all_completed=false
+            all_success=false
+        fi
 
         # Get all jobs for this workflow (whether it's completed or not)
         local jobs
@@ -723,12 +753,14 @@ process_workflow_runs() {
                 local analysis
                 analysis=$(call_claude_analysis "failure" "${context}" "${prompt}")
 
-                # Send notification with properly escaped message
-                local notification_msg
-                notification_msg=$(printf "Workflow '%s' failed!\n\n%d/%d jobs failed:\n%b\nView: %s\n\nAI Analysis:\n%s" "${run_name}" "${failed_job_count}" "${job_count}" "${failed_jobs_summary}" "${html_url}" "${analysis}")
-                send_pushover_notification "PR #${PR_NUMBER}: Workflow Failed" "${notification_msg}" 1
+                # Send individual workflow notification if enabled
+                if [[ "${NOTIFY_PIPELINE_ONLY}" != "true" ]]; then
+                    local notification_msg
+                    notification_msg=$(printf "Workflow '%s' failed!\n\n%d/%d jobs failed:\n%b\nView: %s\n\nAI Analysis:\n%s" "${run_name}" "${failed_job_count}" "${job_count}" "${failed_jobs_summary}" "${html_url}" "${analysis}")
+                    send_pushover_notification "PR #${PR_NUMBER}: Workflow Failed" "${notification_msg}" 1
+                fi
 
-                # Update state
+                # Update state to mark this workflow as notified (for per-workflow tracking)
                 state=$(echo "${state}" | jq ".notified_workflows += [${run_id}]")
 
                 # ============================================================
@@ -796,28 +828,60 @@ ${pr_diff}
         fi
     done < <(echo "${workflow_runs}" | jq -c '.workflow_runs[]')
 
-    # Check if pipeline just passed (all workflows successful)
-    if [[ "${all_success}" == "true" ]] && [[ "${has_failures}" == "false" ]]; then
-        local pipeline_passed
-        pipeline_passed=$(echo "${state}" | jq -r '.pipeline_passed // false')
-
-        local workflow_count
-        workflow_count=$(echo "${workflow_runs}" | jq -r '.workflow_runs | length')
-
-        if [[ "${workflow_count}" -gt 0 ]] && [[ "${pipeline_passed}" == "false" ]]; then
-            log "INFO" "${GREEN}All workflows passed!${NC}"
-
-            # Send success notification
-            send_pushover_notification "PR #${PR_NUMBER}: Pipeline Passed ✓" "All workflows completed successfully!" 0
-
-            # Update state
-            state=$(echo "${state}" | jq '.pipeline_passed = true')
-        fi
+    # ============================================================
+    # PIPELINE-LEVEL NOTIFICATION LOGIC
+    # ============================================================
+    
+    # Determine current pipeline status
+    local current_pipeline_status
+    if [[ "${workflow_count}" -eq 0 ]]; then
+        current_pipeline_status="no_workflows"
+    elif [[ "${all_completed}" == "false" ]]; then
+        current_pipeline_status="in_progress"
+    elif [[ "${has_failures}" == "true" ]]; then
+        current_pipeline_status="failed"
     else
-        # Reset pipeline_passed if there are failures
-        if [[ "${has_failures}" == "true" ]]; then
-            state=$(echo "${state}" | jq '.pipeline_passed = false')
+        current_pipeline_status="success"
+    fi
+
+    # Get previous pipeline status and notification state
+    local previous_pipeline_status
+    previous_pipeline_status=$(echo "${state}" | jq -r '.pipeline_status // "unknown"')
+    
+    local pipeline_notification_sent
+    pipeline_notification_sent=$(echo "${state}" | jq -r '.pipeline_notification_sent // false')
+
+    log "INFO" "Pipeline status: ${previous_pipeline_status} -> ${current_pipeline_status}"
+
+    # Send notification only when pipeline transitions to a completed state
+    if [[ "${current_pipeline_status}" != "${previous_pipeline_status}" ]]; then
+        # Pipeline status changed - reset notification flag
+        state=$(reset_pipeline_notification_flag "${state}")
+        pipeline_notification_sent="false"
+    fi
+
+    # Send notification if pipeline completed and we haven't sent one yet
+    if [[ "${pipeline_notification_sent}" == "false" ]] && is_pipeline_terminal "${current_pipeline_status}"; then
+        if [[ "${current_pipeline_status}" == "success" ]]; then
+            log "INFO" "${GREEN}Pipeline passed - sending success notification${NC}"
+            send_pushover_notification "PR #${PR_NUMBER}: ${pr_title}" "✅ Pipeline passed - all workflows completed successfully!" 0
+        else
+            log "INFO" "${RED}Pipeline failed - sending failure notification${NC}"
+            send_pushover_notification "PR #${PR_NUMBER}: ${pr_title}" "❌ Pipeline failed - one or more workflows have failed." 1
         fi
+        
+        # Mark notification as sent
+        state=$(echo "${state}" | jq '.pipeline_notification_sent = true')
+    fi
+
+    # Update pipeline status in state
+    state=$(echo "${state}" | jq --arg status "${current_pipeline_status}" '.pipeline_status = $status')
+
+    # Legacy: Update pipeline_passed flag for backward compatibility
+    if [[ "${current_pipeline_status}" == "success" ]]; then
+        state=$(echo "${state}" | jq '.pipeline_passed = true')
+    else
+        state=$(echo "${state}" | jq '.pipeline_passed = false')
     fi
 
     echo "${state}"
