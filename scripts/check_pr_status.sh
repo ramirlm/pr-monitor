@@ -738,9 +738,9 @@ process_workflow_runs() {
                 local analysis
                 analysis=$(call_claude_analysis "failure" "${context}" "${prompt}")
 
-                # NOTE: Individual workflow failure notifications are commented out
-                # We only send pipeline-level notifications (see below)
-                # send_pushover_notification "PR #${PR_NUMBER}: Workflow Failed" "${notification_msg}" 1
+                # Individual workflow failure notifications are disabled in favor of pipeline-level notifications
+                # This prevents notification spam when multiple workflows fail
+                # See PIPELINE_NOTIFICATIONS.md for details
 
                 # Update state to mark this workflow as notified (for per-workflow tracking)
                 state=$(echo "${state}" | jq ".notified_workflows += [${run_id}]")
