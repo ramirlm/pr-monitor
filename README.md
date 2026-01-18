@@ -7,6 +7,7 @@ A self-contained, portable system for monitoring GitHub Pull Requests with autom
 - 🔍 **Auto-detection**: Automatically detects PR for current Git branch
 - 🚀 **Manual trigger**: Start monitoring from web dashboard
 - 📊 **Real-time tracking**: Monitor CI checks, reviews, and comments
+- 🔔 **Push notifications**: Pushover notifications for pipeline completion
 - 🤖 **Claude integration**: Automated assistance via Claude CLI
 - 🗃️ **Local storage**: Repository-specific SQLite database
 - 📦 **Portable**: Drop into any Git repository
@@ -104,6 +105,10 @@ Edit `.pr_monitor/.env` to customize:
 - `CLAUDE_CLI`: Path to Claude CLI (default: `claude`)
 - `CHECK_INTERVAL`: Polling interval in seconds (default: 60)
 - `DEBUG`: Enable debug logging (default: false)
+- `PUSHOVER_USER`: Pushover user key (optional, for push notifications)
+- `PUSHOVER_TOKEN`: Pushover API token (optional, for push notifications)
+
+See [PIPELINE_NOTIFICATIONS.md](PIPELINE_NOTIFICATIONS.md) for Pushover setup.
 
 ## Database Schema
 
