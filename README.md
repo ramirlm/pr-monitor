@@ -1,5 +1,8 @@
 # PR Monitor - Portable GitHub PR Monitoring System
 
+[![npm version](https://badge.fury.io/js/pr-monitor.svg)](https://www.npmjs.com/package/pr-monitor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A self-contained, portable system for monitoring GitHub Pull Requests with automated Claude CLI assistance.
 
 ## Features
@@ -12,6 +15,30 @@ A self-contained, portable system for monitoring GitHub Pull Requests with autom
 - 🗃️ **Local storage**: Repository-specific SQLite database
 - 📦 **Portable**: Drop into any Git repository
 
+## Installation
+
+### Option A: NPM Global Install (Recommended)
+
+```bash
+npm install -g pr-monitor
+```
+
+Then navigate to any Git repository and run:
+
+```bash
+pr-monitor dashboard
+```
+
+The tool will automatically initialize a `.pr_monitor/` folder in your repository.
+
+### Option B: Manual Installation
+
+Copy the `.pr_monitor/` folder into your repository:
+
+```bash
+cp -r /path/to/pr-monitor/* /your/repo/.pr_monitor/
+```
+
 ## Quick Start
 
 ### 1. Prerequisites
@@ -21,7 +48,23 @@ A self-contained, portable system for monitoring GitHub Pull Requests with autom
 - [Claude CLI](https://docs.anthropic.com/claude/docs/claude-cli) installed (optional, for automation)
 - Node.js 18+ (for web dashboard)
 
-### 2. Setup
+### 2. Setup (NPM Installation)
+
+If you installed via NPM globally, just run:
+
+```bash
+# Navigate to your Git repository
+cd /path/to/your/repo
+
+# Start the dashboard (auto-initializes on first run)
+pr-monitor dashboard
+```
+
+### 3. Setup (Manual Installation)
+
+### 3. Setup (Manual Installation)
+
+For manual installation (if not using NPM):
 
 ```bash
 # Copy configuration template
@@ -34,12 +77,17 @@ cp .pr_monitor/.env.example .pr_monitor/.env
 bash .pr_monitor/scripts/init_pr_db.sh
 ```
 
-### 3. Usage
+### 4. Usage
+
+### 4. Usage
 
 #### Option A: Web Dashboard (Recommended)
 
 ```bash
-# Start the dashboard
+# If installed via NPM
+pr-monitor dashboard
+
+# If using manual installation
 bash .pr_monitor/pr-monitor.sh dashboard
 
 # Open http://localhost:3000
@@ -49,17 +97,16 @@ bash .pr_monitor/pr-monitor.sh dashboard
 #### Option B: Command Line
 
 ```bash
-# Auto-detect and monitor current branch's PR
-PR_NUM=$(bash .pr_monitor/pr-monitor.sh detect)
-bash .pr_monitor/pr-monitor.sh start $PR_NUM
+# If installed via NPM
+pr-monitor detect              # Show current branch's PR
+pr-monitor start 123          # Start monitoring PR #123
+pr-monitor list               # List running monitors
+pr-monitor stop 123           # Stop monitoring PR #123
 
-# Or specify PR number directly
+# If using manual installation
+bash .pr_monitor/pr-monitor.sh detect
 bash .pr_monitor/pr-monitor.sh start 123
-
-# List running monitors
 bash .pr_monitor/pr-monitor.sh list
-
-# Stop monitoring
 bash .pr_monitor/pr-monitor.sh stop 123
 ```
 
@@ -159,4 +206,4 @@ bash .pr_monitor/pr-monitor.sh dashboard
 
 ## License
 
-See repository root for license information.
+MIT License - see [LICENSE](LICENSE) file for details.

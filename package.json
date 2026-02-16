@@ -1,0 +1,70 @@
+{
+  "name": "pr-monitor",
+  "version": "1.0.0",
+  "description": "A portable GitHub PR monitoring system with automated Claude CLI integration and real-time tracking",
+  "main": "pr-monitor.sh",
+  "bin": {
+    "pr-monitor": "./bin/pr-monitor"
+  },
+  "scripts": {
+    "postinstall": "bash scripts/postinstall.sh",
+    "build": "cd dashboard && npm install && npm run build && bash build-frontend.sh",
+    "test": "bash scripts/test_check_pr_status.sh",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "github",
+    "pull-request",
+    "monitoring",
+    "ci-cd",
+    "claude",
+    "automation",
+    "dashboard",
+    "notifications",
+    "workflow",
+    "cli"
+  ],
+  "author": "PR Monitor Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ramirlm/pr-monitor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ramirlm/pr-monitor/issues"
+  },
+  "homepage": "https://github.com/ramirlm/pr-monitor#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "files": [
+    "bin/",
+    "scripts/",
+    "dashboard/",
+    ".env.example",
+    ".gitignore",
+    "README.md",
+    "LICENSE",
+    "QUICK_START.md",
+    "PIPELINE_NOTIFICATIONS.md",
+    "WORKFLOW_TRACKING.md",
+    "ERROR_EXTRACTION.md",
+    "AUTOMATED_FIXING.md",
+    "REALTIME_LOGS.md",
+    "DUPLICATE_PREVENTION.md",
+    "NOTIFICATION_EXAMPLES.md",
+    "CLAUDE.md",
+    "test-workflow-tracking.sh"
+  ],
+  "directories": {
+    "doc": "."
+  },
+  "preferGlobal": true,
+  "dependencies": {},
+  "peerDependencies": {},
+  "devDependencies": {}
+}
