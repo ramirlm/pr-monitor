@@ -62,8 +62,6 @@ pr-monitor dashboard
 
 ### 3. Setup (Manual Installation)
 
-### 3. Setup (Manual Installation)
-
 For manual installation (if not using NPM):
 
 ```bash
@@ -76,8 +74,6 @@ cp .pr_monitor/.env.example .pr_monitor/.env
 # Initialize database
 bash .pr_monitor/scripts/init_pr_db.sh
 ```
-
-### 4. Usage
 
 ### 4. Usage
 
