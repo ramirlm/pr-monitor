@@ -8,9 +8,8 @@
   },
   "scripts": {
     "postinstall": "bash scripts/postinstall.sh",
-    "build": "cd dashboard && npm install && npm run build && bash build-frontend.sh",
-    "test": "bash scripts/test_check_pr_status.sh",
-    "prepare": "npm run build"
+    "build:dashboard": "cd dashboard && npm install && npm run build && bash build-frontend.sh",
+    "test": "bash scripts/test_check_pr_status.sh"
   },
   "keywords": [
     "github",
@@ -58,6 +57,8 @@
     "DUPLICATE_PREVENTION.md",
     "NOTIFICATION_EXAMPLES.md",
     "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
     "test-workflow-tracking.sh"
   ],
   "directories": {
