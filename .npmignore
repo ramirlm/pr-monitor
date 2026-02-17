@@ -10,9 +10,10 @@ logs/
 
 # Node modules (users will install their own)
 node_modules/
+**/node_modules/
 dashboard/node_modules/
 
-# Build artifacts (will be rebuilt)
+# Build artifacts that should be rebuilt
 dashboard/dist/
 
 # Test files that aren't needed in package
