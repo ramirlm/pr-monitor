@@ -9,8 +9,17 @@ set -euo pipefail
 # Get the directory where this script is installed (npm global bin)
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Get the installation root (one level up from bin/)
-INSTALL_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+# Find the actual installation directory
+# For global installs: bin -> lib/node_modules/pr-monitor
+# For local installs: bin -> node_modules/pr-monitor
+if [[ -d "${BIN_DIR}/../lib/node_modules/pr-monitor" ]]; then
+    INSTALL_DIR="${BIN_DIR}/../lib/node_modules/pr-monitor"
+elif [[ -d "${BIN_DIR}/../node_modules/pr-monitor" ]]; then
+    INSTALL_DIR="${BIN_DIR}/../node_modules/pr-monitor"
+else
+    # Fallback: one level up from bin/
+    INSTALL_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+fi
 
 # If we're in a git repository, use the .pr_monitor folder in the repo
 if git rev-parse --show-toplevel &>/dev/null; then
@@ -23,7 +32,10 @@ if git rev-parse --show-toplevel &>/dev/null; then
         mkdir -p "${PR_MONITOR_DIR}"
         
         # Copy files from global installation to repo
-        cp -r "${INSTALL_DIR}/scripts" "${PR_MONITOR_DIR}/"
+        cp -r "${INSTALL_DIR}/scripts" "${PR_MONITOR_DIR}/" 2>/dev/null || {
+            echo "Error: Could not find installation files at ${INSTALL_DIR}"
+            exit 1
+        }
         cp -r "${INSTALL_DIR}/dashboard" "${PR_MONITOR_DIR}/"
         cp "${INSTALL_DIR}/.env.example" "${PR_MONITOR_DIR}/"
         cp "${INSTALL_DIR}/.gitignore" "${PR_MONITOR_DIR}/"
@@ -39,7 +51,7 @@ if git rev-parse --show-toplevel &>/dev/null; then
         
         # Make scripts executable
         chmod +x "${PR_MONITOR_DIR}/pr-monitor.sh"
-        chmod +x "${PR_MONITOR_DIR}/scripts/"*.sh
+        chmod +x "${PR_MONITOR_DIR}/scripts/"*.sh 2>/dev/null || true
         
         echo "✓ PR Monitor initialized in ${PR_MONITOR_DIR}"
         echo ""
