@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# pr-monitor wrapper for npm global installation
+#
+# This script wraps pr-monitor.sh to work from global npm installation
+
+set -euo pipefail
+
+# Get the directory where this script is installed (npm global bin)
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Find the actual installation directory
+# For global installs: bin -> lib/node_modules/pr-monitor
+# For local installs: bin -> node_modules/pr-monitor
+if [[ -d "${BIN_DIR}/../lib/node_modules/pr-monitor" ]]; then
+    INSTALL_DIR="${BIN_DIR}/../lib/node_modules/pr-monitor"
+elif [[ -d "${BIN_DIR}/../node_modules/pr-monitor" ]]; then
+    INSTALL_DIR="${BIN_DIR}/../node_modules/pr-monitor"
+else
+    # Fallback: one level up from bin/
+    INSTALL_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+fi
+
+# If we're in a git repository, use the .pr_monitor folder in the repo
+if git rev-parse --show-toplevel &>/dev/null; then
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+    PR_MONITOR_DIR="${REPO_ROOT}/.pr_monitor"
+    
+    # If .pr_monitor doesn't exist in the repo, initialize it
+    if [[ ! -d "${PR_MONITOR_DIR}" ]]; then
+        echo "Initializing PR Monitor in repository..."
+        mkdir -p "${PR_MONITOR_DIR}"
+        
+        # Copy files from global installation to repo
+        cp -r "${INSTALL_DIR}/scripts" "${PR_MONITOR_DIR}/" 2>/dev/null || {
+            echo "Error: Could not find installation files at ${INSTALL_DIR}"
+            exit 1
+        }
+        cp -r "${INSTALL_DIR}/dashboard" "${PR_MONITOR_DIR}/"
+        cp "${INSTALL_DIR}/.env.example" "${PR_MONITOR_DIR}/"
+        cp "${INSTALL_DIR}/.gitignore" "${PR_MONITOR_DIR}/"
+        cp "${INSTALL_DIR}/pr-monitor.sh" "${PR_MONITOR_DIR}/"
+        cp "${INSTALL_DIR}/test-workflow-tracking.sh" "${PR_MONITOR_DIR}/" 2>/dev/null || true
+        
+        # Copy documentation
+        for doc in README.md QUICK_START.md PIPELINE_NOTIFICATIONS.md WORKFLOW_TRACKING.md \
+                   ERROR_EXTRACTION.md AUTOMATED_FIXING.md REALTIME_LOGS.md \
+                   DUPLICATE_PREVENTION.md NOTIFICATION_EXAMPLES.md CLAUDE.md; do
+            cp "${INSTALL_DIR}/${doc}" "${PR_MONITOR_DIR}/" 2>/dev/null || true
+        done
+        
+        # Make scripts executable
+        chmod +x "${PR_MONITOR_DIR}/pr-monitor.sh"
+        chmod +x "${PR_MONITOR_DIR}/scripts/"*.sh 2>/dev/null || true
+        
+        echo "✓ PR Monitor initialized in ${PR_MONITOR_DIR}"
+        echo ""
+        echo "Next steps:"
+        echo "  1. Configure: cp ${PR_MONITOR_DIR}/.env.example ${PR_MONITOR_DIR}/.env"
+        echo "  2. Initialize: cd ${PR_MONITOR_DIR} && bash scripts/init_pr_db.sh"
+        echo "  3. Run: pr-monitor dashboard"
+    fi
+    
+    # Run pr-monitor from the repo's .pr_monitor folder
+    exec bash "${PR_MONITOR_DIR}/pr-monitor.sh" "$@"
+else
+    # Not in a git repo - show error
+    echo "Error: pr-monitor must be run from within a Git repository"
+    echo ""
+    echo "Please navigate to a Git repository and run pr-monitor again."
+    echo "The tool will initialize a .pr_monitor/ folder in your repository."
+    exit 1
+fi

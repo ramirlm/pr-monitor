@@ -3,12 +3,17 @@
 ## Installation & Setup
 
 ```bash
-# 1. Initialize database
-./pr-monitor.sh init
-
-# 2. Start dashboard (optional)
-./pr-monitor.sh dashboard
+# Option 1: Use npx (no installation required)
+npx pr-monitor dashboard
 # Opens at http://localhost:3000
+
+# Option 2: Global install then use
+npm install -g pr-monitor
+pr-monitor dashboard
+
+# Option 3: Manual setup (in .pr_monitor folder)
+./pr-monitor.sh init
+./pr-monitor.sh dashboard
 ```
 
 ## Basic Commands
@@ -16,25 +21,39 @@
 ### Start Monitoring a PR
 
 ```bash
-# Auto-detect PR from current branch
+# With npx
+npx pr-monitor detect
+npx pr-monitor start
+
+# With global install
+pr-monitor detect
+pr-monitor start
+
+# Manual installation
 ./pr-monitor.sh detect
 ./pr-monitor.sh start
 
 # Specific PR number
+pr-monitor start 4492
+# or
 ./pr-monitor.sh start 4492
 
 # With explicit repository
-./pr-monitor.sh start 4492 g2i-ai/gheeggle
+pr-monitor start 4492 g2i-ai/gheeggle
 ```
 
 ### View Errors
 
 ```bash
-# Show detailed errors for a PR
+# With npx or global install
+npx pr-monitor errors 4492
+pr-monitor errors 4492
+
+# Manual installation
 ./pr-monitor.sh errors 4492
 
 # Auto-detect from current branch
-./pr-monitor.sh errors
+pr-monitor errors
 
 # Get errors as JSON (for AI agents)
 curl http://localhost:3000/api/prs/4492/errors | jq
@@ -43,12 +62,20 @@ curl http://localhost:3000/api/prs/4492/errors | jq
 ### Stop Monitoring
 
 ```bash
+# With npx or global install
+pr-monitor stop 4492
+
+# Manual installation
 ./pr-monitor.sh stop 4492
 ```
 
 ### List Running Monitors
 
 ```bash
+# With npx or global install  
+pr-monitor list
+
+# Manual installation
 ./pr-monitor.sh list
 ```
 
@@ -94,15 +121,21 @@ curl http://localhost:3000/api/prs/4492/errors
 # 1. Create a PR or checkout branch with PR
 git checkout feature/my-branch
 
-# 2. Start monitoring
+# 2. Start monitoring (with npx - no installation needed)
+npx pr-monitor start
+
+# OR with global install
+pr-monitor start
+
+# OR with manual installation
 ./pr-monitor.sh start
 
 # 3. View in dashboard (optional)
-./pr-monitor.sh dashboard
+pr-monitor dashboard
 # Visit http://localhost:3000
 
 # 4. If CI fails, view errors
-./pr-monitor.sh errors
+pr-monitor errors
 
 # 5. Feed errors to AI for analysis
 curl -s http://localhost:3000/api/prs/4492/errors | \
@@ -110,7 +143,7 @@ curl -s http://localhost:3000/api/prs/4492/errors | \
   claude -p "Analyze these CI failures and suggest fixes"
 
 # 6. Stop monitoring when done
-./pr-monitor.sh stop
+pr-monitor stop
 ```
 
 ## AI Agent Integration
@@ -215,14 +248,16 @@ ps aux | grep "node.*server-simple"
 
 | Command | Description |
 |---------|-------------|
-| `./pr-monitor.sh init` | Initialize database |
-| `./pr-monitor.sh detect` | Detect PR from current branch |
-| `./pr-monitor.sh start <PR>` | Start monitoring |
-| `./pr-monitor.sh stop <PR>` | Stop monitoring |
-| `./pr-monitor.sh list` | List running monitors |
-| `./pr-monitor.sh errors <PR>` | Show detailed errors |
-| `./pr-monitor.sh dashboard` | Start web dashboard |
-| `./pr-monitor.sh query list` | List all tracked PRs |
+| `npx pr-monitor init` or `pr-monitor init` | Initialize database |
+| `npx pr-monitor detect` or `pr-monitor detect` | Detect PR from current branch |
+| `npx pr-monitor start <PR>` or `pr-monitor start <PR>` | Start monitoring |
+| `npx pr-monitor stop <PR>` or `pr-monitor stop <PR>` | Stop monitoring |
+| `npx pr-monitor list` or `pr-monitor list` | List running monitors |
+| `npx pr-monitor errors <PR>` or `pr-monitor errors <PR>` | Show detailed errors |
+| `npx pr-monitor dashboard` or `pr-monitor dashboard` | Start web dashboard |
+| `pr-monitor query list` | List all tracked PRs |
+
+**Note:** Use `npx pr-monitor` to run without installing, or `pr-monitor` after global install with `npm install -g pr-monitor`.
 
 ## Documentation
 

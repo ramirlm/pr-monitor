@@ -1,0 +1,40 @@
+# Development and runtime files
+.env
+data/
+logs/
+*.log
+
+# Git files
+.git/
+.gitignore
+
+# Node modules (users will install their own)
+node_modules/
+**/node_modules/
+dashboard/node_modules/
+
+# Build artifacts that should be rebuilt
+dashboard/dist/
+
+# Test files that aren't needed in package
+*.test.js
+*.spec.js
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CI/CD
+.github/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
