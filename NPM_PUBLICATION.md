@@ -42,9 +42,20 @@ This document outlines the steps taken to prepare PR Monitor for NPM publication
 
 ### 4. Installation Flow
 
-The package supports two installation methods:
+The package supports three installation methods:
 
-#### Global Installation (Recommended)
+#### NPX (No Installation)
+```bash
+npx pr-monitor dashboard
+```
+
+Run directly without global installation. On first run in a repository, the tool automatically:
+1. Creates `.pr_monitor/` folder in the repository
+2. Copies all necessary files (scripts, dashboard, docs)
+3. Sets proper permissions
+4. Displays next steps
+
+#### Global Installation (Recommended for Frequent Use)
 ```bash
 npm install -g pr-monitor
 ```
@@ -53,12 +64,6 @@ Then in any Git repository:
 ```bash
 pr-monitor dashboard
 ```
-
-On first run, the tool automatically:
-1. Creates `.pr_monitor/` folder in the repository
-2. Copies all necessary files (scripts, dashboard, docs)
-3. Sets proper permissions
-4. Displays next steps
 
 #### Local/Manual Installation
 Users can still copy the `.pr_monitor/` folder directly to their repository.

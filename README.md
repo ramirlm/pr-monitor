@@ -17,7 +17,21 @@ A self-contained, portable system for monitoring GitHub Pull Requests with autom
 
 ## Installation
 
-### Option A: NPM Global Install (Recommended)
+### Option A: NPX (No Installation Required)
+
+Run directly without installation using `npx`:
+
+```bash
+# Navigate to your Git repository
+cd /path/to/your/repo
+
+# Run pr-monitor directly
+npx pr-monitor dashboard
+```
+
+The tool will automatically initialize a `.pr_monitor/` folder in your repository on first run.
+
+### Option B: NPM Global Install
 
 ```bash
 npm install -g pr-monitor
@@ -29,9 +43,7 @@ Then navigate to any Git repository and run:
 pr-monitor dashboard
 ```
 
-The tool will automatically initialize a `.pr_monitor/` folder in your repository.
-
-### Option B: Manual Installation
+### Option C: Manual Installation
 
 Copy the `.pr_monitor/` folder into your repository:
 
@@ -48,15 +60,18 @@ cp -r /path/to/pr-monitor/* /your/repo/.pr_monitor/
 - [Claude CLI](https://docs.anthropic.com/claude/docs/claude-cli) installed (optional, for automation)
 - Node.js 18+ (for web dashboard)
 
-### 2. Setup (NPM Installation)
+### 2. Setup (NPX or NPM Installation)
 
-If you installed via NPM globally, just run:
+If using `npx` or installed via NPM globally, just run:
 
 ```bash
 # Navigate to your Git repository
 cd /path/to/your/repo
 
-# Start the dashboard (auto-initializes on first run)
+# With npx (no installation needed)
+npx pr-monitor dashboard
+
+# OR with global install
 pr-monitor dashboard
 ```
 
@@ -80,10 +95,13 @@ bash .pr_monitor/scripts/init_pr_db.sh
 #### Option A: Web Dashboard (Recommended)
 
 ```bash
-# If installed via NPM
+# With npx (no installation)
+npx pr-monitor dashboard
+
+# With global install
 pr-monitor dashboard
 
-# If using manual installation
+# With manual installation
 bash .pr_monitor/pr-monitor.sh dashboard
 
 # Open http://localhost:3000
@@ -93,13 +111,14 @@ bash .pr_monitor/pr-monitor.sh dashboard
 #### Option B: Command Line
 
 ```bash
-# If installed via NPM
-pr-monitor detect              # Show current branch's PR
+# With npx or global install
+npx pr-monitor detect         # Show current branch's PR (with npx)
+pr-monitor detect             # Show current branch's PR (with global)
 pr-monitor start 123          # Start monitoring PR #123
 pr-monitor list               # List running monitors
 pr-monitor stop 123           # Stop monitoring PR #123
 
-# If using manual installation
+# With manual installation
 bash .pr_monitor/pr-monitor.sh detect
 bash .pr_monitor/pr-monitor.sh start 123
 bash .pr_monitor/pr-monitor.sh list

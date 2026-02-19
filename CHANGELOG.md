@@ -23,11 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time log streaming
 - Duplicate prevention mechanisms
 - Comprehensive documentation
+- **NPM package support**: Install globally or use with `npx` (no installation needed)
 
 ### Features
 - **Monitoring**: Background polling of GitHub API for PR status
 - **Dashboard**: Express + TypeScript web UI at http://localhost:3000
 - **CLI**: Command-line interface with `pr-monitor` command
+- **NPX Support**: Run with `npx pr-monitor` without installation
 - **Notifications**: Pushover integration for mobile/desktop alerts
 - **Automation**: Claude CLI integration for automated PR assistance
 - **Database**: SQLite for local state and history tracking
